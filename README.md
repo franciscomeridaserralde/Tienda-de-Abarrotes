@@ -89,15 +89,19 @@ git clone https://github.com/TU-USUARIO/TU-REPOSITORIO.git
 cd TU-REPOSITORIO
 ```
 
-### 3. Ejecutar el programa
+O busca en tu Explorador de Archivos
 
-Asegúrate de tener Python 3 instalado y ejecuta:
+### 3. Ejecutar el instalador
 
-```bash
-python abarrotes.py
+Dar doble click sobre el instalador, si no tiene instalado python lo instalará con las dependencias necesarias, al final dará un PATH a los archivos:
+
+```text
+├── abarrotes.db
+├── ventas.db
+└── admin.json
 ```
 
-**Nota:** Tkinter generalmente viene incluido con Python. En algunas distribuciones de Linux puede ser necesario instalar el paquete `python3-tk`.
+Y generará un acceso directo desde el Escritorio.
 
 ## Primer inicio
 
