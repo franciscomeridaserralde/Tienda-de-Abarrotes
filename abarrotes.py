@@ -21,7 +21,6 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from tkinter import ttk, messagebox
 
-# Los datos se guardan junto al programa (o junto al .exe), sin importar desde dónde se abra
 if getattr(sys, "frozen", False):
     BASE_DIR = os.path.dirname(sys.executable)
 else:
@@ -29,12 +28,11 @@ else:
 DB_PRODUCTOS = os.path.join(BASE_DIR, "abarrotes.db")
 DB_VENTAS = os.path.join(BASE_DIR, "ventas.db")
 ADMIN_FILE = os.path.join(BASE_DIR, "admin.json")
-STOCK_BAJO = 5  # productos con esta cantidad o menos se resaltan
+STOCK_BAJO = 5
 
-# ===================================================================== Estilo
 FUENTE = "Segoe UI" if sys.platform.startswith("win") else "Helvetica"
 
-Color = namedtuple("Color", "base oscuro claro")  # color normal, al pasar el mouse, fondo suave
+Color = namedtuple("Color", "base oscuro claro")
 VERDE = Color("#2e7d32", "#1b5e20", "#e8f5e9")
 AZUL = Color("#1565c0", "#0d47a1", "#e3f2fd")
 NARANJA = Color("#ef6c00", "#e65100", "#fff3e0")
@@ -43,9 +41,9 @@ MORADO = Color("#6a1b9a", "#4a148c", "#f3e5f5")
 OSCURO = Color("#37474f", "#263238", "#cfd8dc")
 NEUTRO = Color("#eceff1", "#cfd8dc", "#ffffff")
 
-BG = "#f4f6f8"        # fondo general
-TARJETA = "#ffffff"   # fondo de tarjetas
-FILA_ALT = "#f6f8fa"  # filas alternadas
+BG = "#f4f6f8"
+TARJETA = "#ffffff"
+FILA_ALT = "#f6f8fa"
 TEXTO = "#263238"
 SUAVE = "#78909c"
 BORDE = "#dfe5ea"
@@ -83,7 +81,6 @@ def configurar_estilos(root):
     s.configure("TEntry", padding=6)
     s.configure("Vertical.TScrollbar", troughcolor=BG, background="#cfd8dc", bordercolor=BG,
                 arrowcolor=SUAVE)
-    # Un estilo de tabla por color: encabezado del color de la ventana
     for nombre, c in (("Verde", VERDE), ("Azul", AZUL), ("Naranja", NARANJA)):
         s.configure(f"{nombre}.Treeview", font=f(11), rowheight=32, background=TARJETA,
                     fieldbackground=TARJETA, foreground=TEXTO, borderwidth=0)
@@ -109,7 +106,6 @@ def tarjeta(parent, **kw):
 
 
 def pantalla_completa(win):
-    """Abre la ventana en pantalla completa. F11 activa/desactiva el modo."""
     try:
         win.attributes("-fullscreen", True)
     except tk.TclError:
@@ -123,7 +119,7 @@ def pantalla_completa(win):
 def encabezado(parent, icono, titulo, subtitulo, color, volver=None, texto_volver="←  Volver al menú"):
     barra = tk.Frame(parent, bg=color.base)
     barra.pack(fill="x")
-    if volver:  # botón a la derecha; se empaqueta primero para que las etiquetas usen el resto
+    if volver:
         Boton(barra, texto_volver, volver, Color(color.oscuro, color.base, color.claro),
               tam=11, pady=8).pack(side="right", padx=22, pady=14)
     tk.Label(barra, text=f"{icono}  {titulo}", bg=color.base, fg="white",
@@ -159,7 +155,6 @@ def _puntero_dentro(widget):
 
 
 class Boton(tk.Label):
-    """Botón plano de color con efecto al pasar el mouse (funciona igual en Windows, Mac y Linux)."""
 
     def __init__(self, parent, texto, comando, color=VERDE, tam=12, padx=16, pady=8, fg="white", **kw):
         super().__init__(parent, text=texto, bg=color.base, fg=fg, font=f(tam, "bold"),
@@ -176,7 +171,6 @@ class Boton(tk.Label):
 
 
 class TarjetaMenu(tk.Frame):
-    """Botón grande del menú principal: icono + título + descripción."""
 
     def __init__(self, parent, icono, titulo, descripcion, color, comando):
         super().__init__(parent, bg=color.base, cursor="hand2")
@@ -208,7 +202,6 @@ class TarjetaMenu(tk.Frame):
 
 
 class ScrollFrame(tk.Frame):
-    """Marco con barra de desplazamiento vertical; poner widgets en self.inner."""
 
     def __init__(self, parent, bg=TARJETA):
         super().__init__(parent, bg=bg)
@@ -237,10 +230,7 @@ class ScrollFrame(tk.Frame):
         arriba = getattr(e, "num", 0) == 4 or getattr(e, "delta", 0) > 0
         self.canvas.yview_scroll(-1 if arriba else 1, "units")
 
-
-# =============================================================== Base de datos
 class Database:
-    """Productos e inventario (abarrotes.db)."""
 
     def __init__(self, path=DB_PRODUCTOS):
         self.conn = sqlite3.connect(path)
@@ -264,7 +254,6 @@ class Database:
         ).fetchall()
 
     def resumen(self):
-        """(total de productos, productos con poco stock)"""
         n, bajo = self.conn.execute(
             "SELECT COUNT(*), COALESCE(SUM(cantidad <= ?), 0) FROM productos", (STOCK_BAJO,)
         ).fetchone()
@@ -306,7 +295,6 @@ class Database:
 
 
 class VentasDB:
-    """Historial de ventas (ventas.db), en un archivo separado."""
 
     def __init__(self, path=DB_VENTAS):
         self.conn = sqlite3.connect(path)
@@ -334,7 +322,6 @@ class VentasDB:
         self.conn.commit()
 
     def registrar(self, items, total, pago):
-        """items: lista de (producto_id, nombre, precio, cantidad)."""
         ahora = datetime.now()
         cur = self.conn.execute(
             "INSERT INTO ventas (fecha, hora, total, pago, cambio) VALUES (?,?,?,?,?)",
@@ -360,9 +347,7 @@ class VentasDB:
         ).fetchall()
 
 
-# ================================================================ Autenticación
 class Auth:
-    """Usuario y contraseña del administrador (admin.json, contraseña con hash)."""
 
     def __init__(self, path=ADMIN_FILE):
         self.path = path
@@ -393,9 +378,7 @@ class Auth:
         return usuario_ok and pass_ok
 
 
-# ===================================================================== Diálogos
 class CredencialesDialog(tk.Toplevel):
-    """Ventana modal de usuario/contraseña. Resultado: self.resultado = (usuario, password) o None."""
 
     def __init__(self, parent, titulo, confirmar=False, mensaje=""):
         super().__init__(parent, bg=TARJETA)
@@ -456,7 +439,6 @@ class CredencialesDialog(tk.Toplevel):
 
 
 class CobroDialog(tk.Toplevel):
-    """Pide con cuánto paga el cliente y calcula el cambio al instante. Resultado en self.pago."""
 
     def __init__(self, parent, total):
         super().__init__(parent, bg=TARJETA)
@@ -537,7 +519,6 @@ class CobroDialog(tk.Toplevel):
 
 
 class ExitoDialog(tk.Toplevel):
-    """Aviso grande de venta registrada con el cambio a entregar."""
 
     def __init__(self, parent, total, pago):
         super().__init__(parent, bg=TARJETA)
@@ -571,7 +552,6 @@ class ExitoDialog(tk.Toplevel):
         hacer_modal(self, parent)
 
 
-# ================================================================ Ventana: VENTA
 class VentaWindow(tk.Toplevel):
     def __init__(self, parent, db, ventas):
         super().__init__(parent, bg=BG)
@@ -579,7 +559,7 @@ class VentaWindow(tk.Toplevel):
         pantalla_completa(self)
         self.db = db
         self.ventas = ventas
-        self.carrito = {}  # producto_id -> {"nombre", "precio", "cantidad"}
+        self.carrito = {}
 
         encabezado(self, "🛒", "Venta", "Busca o escanea los productos y agrégalos al carrito", VERDE,
                    volver=self.destroy)
@@ -600,7 +580,6 @@ class VentaWindow(tk.Toplevel):
         self.render_carrito()
         self.ent_buscar.focus_set()
 
-    # --- Panel izquierdo: lista de productos
     def _panel_productos(self, marco):
         tk.Label(marco, text="Productos", bg=TARJETA, fg=VERDE.base, font=f(14, "bold")).pack(
             anchor="w", padx=14, pady=(12, 0))
@@ -633,10 +612,8 @@ class VentaWindow(tk.Toplevel):
         tk.Label(marco, text="Naranja = quedan pocas piezas   ·   Gris = agotado", bg=TARJETA,
                  fg=SUAVE, font=f(9)).pack(pady=(0, 10))
 
-        # Se actualiza si se cambió el inventario en otra ventana
         self.bind("<FocusIn>", lambda e: self.refrescar_productos() if e.widget is self else None)
 
-    # --- Panel derecho: carrito
     def _panel_carrito(self, marco):
         enc = tk.Frame(marco, bg=TARJETA)
         enc.pack(fill="x", padx=14, pady=(12, 6))
@@ -662,7 +639,6 @@ class VentaWindow(tk.Toplevel):
         Boton(botones, "Vaciar", self.vaciar, ROJO, tam=12, pady=14).pack(side="left", padx=3)
         Boton(botones, "Cerrar", self.destroy, NEUTRO, fg=TEXTO, tam=12, pady=14).pack(side="left", padx=(3, 0))
 
-    # --- Lista de productos
     def refrescar_productos(self):
         if not self.winfo_exists():
             return
@@ -683,7 +659,7 @@ class VentaWindow(tk.Toplevel):
         texto = self.var_buscar.get().strip()
         if not texto:
             return
-        prod = self.db.buscar_por_codigo(texto)  # código de barras exacto
+        prod = self.db.buscar_por_codigo(texto)
         if prod:
             self.agregar_al_carrito(prod[0])
             self.var_buscar.set("")
@@ -702,7 +678,6 @@ class VentaWindow(tk.Toplevel):
         else:
             messagebox.showinfo("Elige un producto", "Selecciona un producto de la lista.", parent=self)
 
-    # --- Carrito
     def agregar_al_carrito(self, pid):
         prod = self.db.obtener(pid)
         if not prod:
@@ -761,7 +736,6 @@ class VentaWindow(tk.Toplevel):
             bg = TARJETA if i % 2 == 0 else FILA_ALT
             fila = tk.Frame(inner, bg=bg)
             fila.pack(fill="x")
-            # Se empaqueta de derecha a izquierda; el nombre ocupa el espacio que sobra
             Boton(fila, "✕", lambda p=pid: self.quitar(p), NEUTRO, fg=ROJO.base, tam=11, padx=8, pady=3).pack(
                 side="right", padx=(8, 8), pady=8)
             tk.Label(fila, text=dinero(it["precio"] * it["cantidad"]), width=10, anchor="e", bg=bg,
@@ -780,14 +754,12 @@ class VentaWindow(tk.Toplevel):
         self.lbl_items.config(text=f"{piezas} pieza(s)" if piezas else "")
         self.lbl_total.config(text=dinero(self.total()))
 
-    # --- Cobro
     def cobrar(self):
         if not self.carrito:
             messagebox.showinfo("Carrito vacío", "Agrega productos antes de cobrar.", parent=self)
             return
         total = self.total()
 
-        # Revisar existencias actuales antes de cobrar
         for pid, it in self.carrito.items():
             prod = self.db.obtener(pid)
             if not prod or prod[4] < it["cantidad"]:
@@ -812,7 +784,6 @@ class VentaWindow(tk.Toplevel):
         self.ent_buscar.focus_set()
 
 
-# ======================================================= Ventana: AGREGAR PRODUCTOS
 class ProductosWindow(tk.Toplevel):
     def __init__(self, parent, db):
         super().__init__(parent, bg=BG)
@@ -1002,7 +973,6 @@ class ProductosWindow(tk.Toplevel):
 
 
 class PedirCantidadDialog(tk.Toplevel):
-    """Pregunta cuántas piezas entraron. Resultado en self.valor (int) o None."""
 
     def __init__(self, parent, producto):
         super().__init__(parent, bg=TARJETA)
@@ -1043,7 +1013,6 @@ class PedirCantidadDialog(tk.Toplevel):
         self.destroy()
 
 
-# ===================================================== Ventana: VENTAS DEL DÍA (admin)
 class VentasDiaWindow(tk.Toplevel):
     def __init__(self, parent, ventas):
         super().__init__(parent, bg=BG)
@@ -1056,7 +1025,6 @@ class VentasDiaWindow(tk.Toplevel):
         cuerpo = tk.Frame(self, bg=BG)
         cuerpo.pack(fill="both", expand=True, padx=14, pady=14)
 
-        # --- Selector de fecha
         barra = tarjeta(cuerpo)
         barra.pack(fill="x")
         fila = tk.Frame(barra, bg=TARJETA)
@@ -1072,7 +1040,6 @@ class VentasDiaWindow(tk.Toplevel):
         Boton(fila, "◀ Anterior", lambda: self.mover(-1), NEUTRO, fg=TEXTO, tam=10, pady=5).pack(
             side="right", padx=6)
 
-        # --- Resumen en tarjetas de colores
         stats = tk.Frame(cuerpo, bg=BG)
         stats.pack(fill="x", pady=12)
         self.lbl_n = self._stat(stats, "VENTAS", AZUL, 0)
@@ -1081,7 +1048,6 @@ class VentasDiaWindow(tk.Toplevel):
         for c in range(3):
             stats.columnconfigure(c, weight=1, uniform="stat")
 
-        # --- Ventas
         marco1 = tarjeta(cuerpo)
         marco1.pack(fill="both", expand=True)
         tk.Label(marco1, text="Ventas registradas", bg=TARJETA, fg=NARANJA.base, font=f(12, "bold")).pack(
@@ -1097,7 +1063,6 @@ class VentasDiaWindow(tk.Toplevel):
         self.tabla.pack(fill="both", expand=True, padx=1, pady=(0, 1))
         self.tabla.bind("<<TreeviewSelect>>", self.mostrar_detalle)
 
-        # --- Detalle
         marco2 = tarjeta(cuerpo)
         marco2.pack(fill="both", expand=True, pady=(12, 0))
         self.lbl_detalle = tk.Label(marco2, text="Detalle de la venta (selecciona una arriba)", bg=TARJETA,
@@ -1166,7 +1131,6 @@ class VentasDiaWindow(tk.Toplevel):
                                 values=(nombre, dinero(precio), cant, dinero(sub)))
 
 
-# =================================================================== Menú principal
 class MenuPrincipal(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -1181,7 +1145,6 @@ class MenuPrincipal(tk.Tk):
         encabezado(self, "🏪", "Tienda de abarrotes", fecha_larga(), OSCURO,
                    volver=self.salir, texto_volver="✕  Salir")
 
-        # Contenido centrado en la pantalla, con ancho fijo para que no se estire demasiado
         centro = tk.Frame(self, bg=BG)
         centro.pack(expand=True)
         centro.columnconfigure(0, minsize=780)
@@ -1226,8 +1189,6 @@ class MenuPrincipal(tk.Tk):
         setattr(self, atributo, clase(self, *args))
 
     def pedir_login(self, mensaje):
-        """Pide usuario y contraseña de administrador. Devuelve True si son correctos."""
-        # Primera vez: crear el usuario administrador
         if not self.auth.existe():
             if not messagebox.askyesno(
                     "Administrador",
